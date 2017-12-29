@@ -9,6 +9,7 @@ use strict;
 use warnings;
 use base qw(Slim::Web::Settings);
 
+use version;
 use MIME::Base64;
 
 use Slim::Utils::Log;
@@ -23,6 +24,11 @@ my $os = Slim::Utils::OSDetect->getOS();
 my $log = logger('plugin.googlemusic');
 my $prefs = preferences('plugin.googlemusic');
 my $googleapi = Plugins::GoogleMusic::GoogleAPI::get();
+my $max_search_items = 999;
+
+if (version->parse(Plugins::GoogleMusic::GoogleAPI::get_version()) lt version->parse('11.0.0')) {
+    my $max_search_items = 100;
+}
 
 $prefs->init({
     username => '',
@@ -30,7 +36,7 @@ $prefs->init({
     disable_ssl => 0,
     my_music_album_sort_method => 'artistyearalbum',
     all_access_album_sort_method => 'none',
-    max_search_items => 100,
+    max_search_items => $max_search_items,
     max_artist_tracks => 25,
     max_related_artists => 10,
 });
