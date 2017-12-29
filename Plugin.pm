@@ -11,6 +11,7 @@ use base qw(Slim::Plugin::OPMLBased);
 use Scalar::Util qw(blessed);
 use Encode qw(decode_utf8);
 use MIME::Base64;
+use version;
 
 use vars qw($VERSION);
 
@@ -54,17 +55,27 @@ sub getDisplayName {
 sub initPlugin {
     my $class = shift;
 
+    Plugins::GoogleMusic::GoogleAPI::get_version();
+    my $gmusicapi_version = Plugins::GoogleMusic::GoogleAPI::get_version();
+
+    main::INFOLOG && $log->info("Loading gmusicapi version " . $gmusicapi_version);
+
     # Set the version of this plugin
     $VERSION = $class->_pluginDataFor('version');
 
-    # Chech version of gmusicapi first
-    if (!blessed($googleapi)) {
+    # Check version of gmusicapi first
+    if (version->parse($gmusicapi_version) lt version->parse('10.1.2')) {
+        main::INFOLOG && $log->info("Please upgrade python package gmusicapi to version 10.1.2 or greater");
+    }
+
+    if (!blessed($googleapi) || version->parse($gmusicapi_version) lt version->parse('4.0.0')) {
         $class->SUPER::initPlugin(
             tag    => 'googlemusic',
             feed   => \&badVersion,
             is_app => 1,
             weight => 1,
             );
+            $log->error("Installed version of gmusicapi is too old. Disabling plugin");
         return;
     }
 
